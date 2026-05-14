@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Results</title>
+</head>
+<body>
+
+    <a href="/">Back</a>
+
+    <h2>Page Stats</h2>
+
+    {% if data.page_name %}
+
+        <p><strong>Page Name:</strong> {{ data.page_name }}</p>
+        <p><strong>Followers:</strong> {{ data.followers or '—' }}</p>
+        <p><strong>Following:</strong> {{ data.following or '—' }}</p>
+        <p><strong>URL:</strong> {{ data.url }}</p>
+
+    {% else %}
+
+        <p>Could not fetch data. Please try again.</p>
+
+    {% endif %}
+
+</body>
+</html>
