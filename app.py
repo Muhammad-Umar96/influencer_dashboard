@@ -18,7 +18,21 @@ def followers():
         return jsonify({"error": "Please provide a valid Facebook page URL"}), 400
 
     result = get_follower_count(url)
+    print(result)
     return render_template('result.html', data=result)
+
+@app.route('/api/followers', methods=['GET'])
+def api_followers():
+    url = request.args.get('url')
+
+    if not url:
+        return jsonify({"error": "Please provide a url parameter"}), 400
+
+    if "facebook.com" not in url:
+        return jsonify({"error": "Please provide a valid Facebook page URL"}), 400
+
+    result = get_follower_count(url)
+    return jsonify(result)
 
 if __name__ == '__main__':
     app.run(debug=True)

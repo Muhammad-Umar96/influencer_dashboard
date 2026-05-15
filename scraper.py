@@ -1,69 +1,57 @@
-from playwright.sync_api import sync_playwright
+import requests
 import re
+from bs4 import BeautifulSoup
+
+API_KEY = "ef4a116faee84388b23c4b354e43ae73114573cf816"
 
 def get_follower_count(fb_url):
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        context = browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
-            locale="en-US",
-            timezone_id="America/New_York"
-        )
-        page = context.new_page()
+    try:
+        api_url = f"https://api.scrape.do?token={API_KEY}&url={fb_url}&render=true"
+        
+        response = requests.get(api_url, timeout=60)
+        html = response.text
+        soup = BeautifulSoup(html, "html.parser")
+        body_text = soup.get_text()
 
-        try:
-            page.goto(fb_url, wait_until="domcontentloaded", timeout=30000)
-            page.wait_for_timeout(3000)
-            try:
-                page.keyboard.press("Escape")
-                page.wait_for_timeout(1000)
-            except:
-                pass
+        page_name = None
+        followers = None
+        following = None
 
-            content = page.content()
-            body_text = page.locator("body").inner_text()
+        # get page name from title
+        title = soup.find("title")
+        if title:
+            name = title.text
+            name = re.sub(r'^\(\d+\)\s*', '', name)
+            name = re.sub(r'\s*\|?\s*Facebook$', '', name)
+            page_name = name.strip()
 
-            followers = None
-            following = None
-            page_name = None
+        # get followers from JSON data
+        match = re.search(r'"text"\s*:\s*"([\d.,]+[KMB]?)\s*followers"', html, re.IGNORECASE)
+        if match:
+            followers = match.group(1).strip()
 
-            # get page name from H1 inside main
-            try:
-                page_name = page.get_by_role("main").locator("h1").inner_text()
-                page_name = page_name.strip()
-            except:
-                pass
+        # get following from JSON data
+        match = re.search(r'"text"\s*:\s*"([\d.,]+[KMB]?)\s*following"', html, re.IGNORECASE)
+        if match:
+            following = match.group(1).strip()
 
-            # get followers from body text
-            match = re.search(r'([\d.,]+[KMB]?)\s*[Ff]ollowers', body_text)
-            if match:
-                followers = match.group(1).strip()
+        return {
+            "url": fb_url,
+            "page_name": page_name,
+            "followers": followers,
+            "following": following,
+        }
 
-            # get following from body text
-            match = re.search(r'([\d.,]+[KMB]?)\s*[Ff]ollowing', body_text)
-            if match:
-                following = match.group(1).strip()
-
-            browser.close()
-
-            return {
-                "url": fb_url,
-                "page_name": page_name,
-                "followers": followers,
-                "following": following,
-            }
-
-        except Exception as e:
-            browser.close()
-            return {
-                "url": fb_url,
-                "page_name": None,
-                "followers": None,
-                "following": None,
-                "status": f"error: {str(e)}"
-            }
+    except Exception as e:
+        print(f"SCRAPER ERROR: {str(e)}")
+        return {
+            "url": fb_url,
+            "page_name": None,
+            "followers": None,
+            "following": None,
+        }
 
 
 if __name__ == "__main__":
-    result = get_follower_count("https://www.facebook.com/nasa")
+    result = get_follower_count("https://www.facebook.com/natgeo")
     print(result)
