@@ -1,41 +1,21 @@
-<!-- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Influencer Dashboard</title>
 </head>
 <body>
-    <h2>Facebook Follower Checker</h2>
 
-    <input type="text" id="urlInput" placeholder="https://www.facebook.com/your-facebook-page", style="width: 400px; font-size: 16px;" />
-    <button onclick="fetchFollowers()">Get Stats</button>
-
-    <div id="result"></div>
-
-    <script>
-        async function fetchFollowers() {
-            const url = document.getElementById('urlInput').value.trim();
-            const res = await fetch(`/followers?url=${encodeURIComponent(url)}`);
-            const data = await res.json();
-            document.getElementById('result').innerText = JSON.stringify(data, null, 2);
-        }
-    </script>
-</body>
-</html> -->
-
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Facebook Follower Checker</title>
-</head>
-<body>
-
-    <h2>Facebook Follower Checker</h2>
+    <h2>Influencer Dashboard</h2>
+    <p>Enter a Facebook, Instagram, YouTube or TikTok page URL</p>
 
     <form action="/followers" method="GET">
-        <input type="text" name="url" placeholder="https://www.facebook.com/page-name", style="width: 400px; font-size: 16px;" />
+        <input 
+            type="text" 
+            name="url" 
+            placeholder="Facebook, Instagram, YouTube or TikTok URL" 
+            style="width: 500px; font-size: 16px;" 
+        />
         <button type="submit">Get Stats</button>
     </form>
 

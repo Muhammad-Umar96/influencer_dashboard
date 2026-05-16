@@ -6,19 +6,25 @@
 </head>
 <body>
 
-    <a href="/">Back</a>
+    <a href="/">← Back</a>
 
-    <h2>Page Stats</h2>
+    <h2>Page Results</h2>
 
     {% if data.page_name %}
 
+        <p><strong>Platform:</strong> {{ data.platform }}</p>
         <p><strong>Page Name:</strong> {{ data.page_name }}</p>
         <p><strong>Followers:</strong> {{ data.followers or '—' }}</p>
         <p><strong>Following:</strong> {{ data.following or '—' }}</p>
         <p><strong>URL:</strong> {{ data.url }}</p>
 
-    {% else %}
+    {% elif data.channel_name %}
+        <p><strong>Platform:</strong> {{ data.platform }}</p>
+        <p><strong>Channel Name:</strong> {{ data.channel_name }}</p>
+        <p><strong>Subscribers:</strong> {{ data.subscribers or '—' }}</p>
+        <p><strong>URL:</strong> {{ data.url }}</p>
 
+    {% else %}
         <p>Could not fetch data. Please try again.</p>
 
     {% endif %}
