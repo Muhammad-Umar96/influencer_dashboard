@@ -2,32 +2,55 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Results</title>
+    <title>Results - Influencer Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+    <div class="wrap">
+        <h1>Influencer Dashboard</h1>
 
-    <a href="/">← Back</a>
+        <a href="/" class="back">← Back</a>
 
-    <h2>Page Results</h2>
+        {% if data.page_name or data.channel_name %}
 
-    {% if data.page_name %}
+        <div class="result">
+            <div class="rhead">
+                <div class="av">
+                    {{ (data.page_name or data.channel_name)[:2].upper() }}
+                </div>
+                <div>
+                    <div class="rname">{{ data.page_name or data.channel_name }}</div>
+                    <div class="rurl">{{ data.url }}</div>
+                </div>
+            </div>
 
-        <p><strong>Platform:</strong> {{ data.platform }}</p>
-        <p><strong>Page Name:</strong> {{ data.page_name }}</p>
-        <p><strong>Followers:</strong> {{ data.followers or '—' }}</p>
-        <p><strong>Following:</strong> {{ data.following or '—' }}</p>
-        <p><strong>URL:</strong> {{ data.url }}</p>
+            <div class="grid">
+                <div class="stat">
+                    <div class="slabel">
+                        {% if data.platform == 'YouTube' %}
+                            Subscribers
+                        {% else %}
+                            Followers
+                        {% endif %}
+                    </div>
+                    <div class="sval">
+                        {{ data.followers or data.subscribers or '—' }}
+                    </div>
+                </div>
 
-    {% elif data.channel_name %}
-        <p><strong>Platform:</strong> {{ data.platform }}</p>
-        <p><strong>Channel Name:</strong> {{ data.channel_name }}</p>
-        <p><strong>Subscribers:</strong> {{ data.subscribers or '—' }}</p>
-        <p><strong>URL:</strong> {{ data.url }}</p>
+                {% if data.platform != 'YouTube' %}
+                <div class="stat">
+                    <div class="slabel">Following</div>
+                    <div class="sval">{{ data.following or '—' }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
 
-    {% else %}
-        <p>Could not fetch data. Please try again.</p>
+        {% else %}
+        <div class="err">Could not fetch data. Please check the URL and try again.</div>
+        {% endif %}
 
-    {% endif %}
-
+    </div>
 </body>
 </html>

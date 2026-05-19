@@ -3,21 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <title>Influencer Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+    <div class="wrap">
+        <h1>Influencer Dashboard</h1>
+        <p class="sub">Enter a Facebook, Instagram, YouTube or TikTok URL</p>
 
-    <h2>Influencer Dashboard</h2>
-    <p>Enter a Facebook, Instagram, YouTube or TikTok page URL</p>
+        <form action="/followers" method="GET">
+            <div class="row">
+                <input type="text" name="url" placeholder="https://www.instagram.com/natgeo" />
+                <button type="submit">Search</button>
+            </div>
+        </form>
 
-    <form action="/followers" method="GET">
-        <input 
-            type="text" 
-            name="url" 
-            placeholder="Facebook, Instagram, YouTube or TikTok URL" 
-            style="width: 500px; font-size: 16px;" 
-        />
-        <button type="submit">Get Stats</button>
-    </form>
-
+        {% if error %}
+        <div class="err">{{ error }}</div>
+        {% endif %}
+    </div>
 </body>
 </html>
