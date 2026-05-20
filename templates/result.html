@@ -11,15 +11,19 @@
 
         <a href="/" class="back">← Back</a>
 
-        {% if data.page_name or data.channel_name %}
+        {% if data.page_name or data.channel_name or data.followers or data.subscribers %}
 
         <div class="result">
             <div class="rhead">
-                <div class="av">
-                    {{ (data.page_name or data.channel_name)[:2].upper() }}
-                </div>
+                {% if data.image %}
+                    <img src="{{ data.image }}" alt="Profile" class="av-img" />
+                {% else %}
+                    <div class="av">
+                        {{ (data.page_name or data.channel_name or data.url or '?')[:2].upper() }}
+                    </div>
+                {% endif %}
                 <div>
-                    <div class="rname">{{ data.page_name or data.channel_name }}</div>
+                    <div class="rname">{{ data.page_name or data.channel_name or data.url }}</div>
                     <div class="rurl">{{ data.url }}</div>
                 </div>
             </div>

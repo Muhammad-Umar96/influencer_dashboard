@@ -2,7 +2,7 @@ import requests
 import re
 from bs4 import BeautifulSoup
 
-API_KEY = "94659b271c2843c0bd2136a90fbae0fabdd95493584"
+API_KEY = "f63b99413d994a9392bc28b8c95390c314d94587a71"
 
 def get_facebook_data(fb_url):
     try:
@@ -14,6 +14,8 @@ def get_facebook_data(fb_url):
         page_name = None
         followers = None
         following = None
+        image = None
+
 
         # get page name from title
         title = soup.find("title")
@@ -33,12 +35,28 @@ def get_facebook_data(fb_url):
         if match:
             following = match.group(1).strip()
 
+        og_image = soup.find("meta", property="og:image")
+        if og_image:
+            image = og_image.get("content")
+
         return {
             "platform": "Facebook",
             "url": fb_url,
             "page_name": page_name,
             "followers": followers,
             "following": following,
+            "image": image
+        }
+
+    except Exception as e:
+        print(f"FACEBOOK SCRAPER ERROR: {str(e)}")
+        return {
+            "platform": "Facebook",
+            "url": fb_url,
+            "page_name": None,
+            "followers": None,
+            "following": None,
+            "image": None
         }
 
     except Exception as e:
@@ -62,6 +80,7 @@ def get_instagram_data(ig_url):
         page_name = None
         followers = None
         following = None
+        image = None
 
         # get page name from title
         title = soup.find("title")
@@ -84,6 +103,10 @@ def get_instagram_data(ig_url):
             match = re.search(r'([\d,.]+[KMB]?)\s*Following', content)
             if match:
                 following = match.group(1).strip()
+            
+        og_image = soup.find("meta", property="og:image")
+        if og_image:
+            image = og_image.get("content")
 
         return {
             "platform": "Instagram",
@@ -91,6 +114,7 @@ def get_instagram_data(ig_url):
             "page_name": page_name,
             "followers": followers,
             "following": following,
+            "image": image
         }
 
     except Exception as e:
@@ -101,6 +125,7 @@ def get_instagram_data(ig_url):
             "page_name": None,
             "followers": None,
             "following": None,
+            "image": None
         }
 
 def get_youtube_data(yt_url):
@@ -142,6 +167,8 @@ def get_youtube_data(yt_url):
         channel = data["items"][0]
         page_name = channel["snippet"]["title"]
         subscribers = int(channel["statistics"].get("subscriberCount", 0))
+        image = channel["snippet"]["thumbnails"]["high"]["url"]
+
 
         # format subscriber count like 1.2M, 500K etc
         if subscribers >= 1_000_000:
@@ -156,6 +183,7 @@ def get_youtube_data(yt_url):
             "url": yt_url,
             "channel_name": page_name,
             "subscribers": subscribers,
+            "image": image,
         }
 
     except Exception as e:
@@ -177,22 +205,48 @@ def get_tiktok_data(tt_url):
         page_name = None
         followers = None
         following = None
+        image = None
 
-        # get page name from title
-        title = soup.find("title")
-        if title:
-            page_name = title.text
-            page_name = re.sub(r'\s*\|.*$', '', page_name)
-            page_name = re.sub(r'\s*-.*$', '', page_name)
-            page_name = page_name.strip()
+        # get page name from JSON data (more reliable than title tag)
+        match = re.search(r'"nickname"\s*:\s*"([^"]+)"', html)
+        if match:
+            page_name = match.group(1).strip()
 
-        # try meta description first
-        description = soup.find("meta", {"name": "description"})
-        if description:
-            content = description.get("content", "")
-            print("Meta description:", content)
+        # fallback: try uniqueId (username) if nickname not found
+        if not page_name:
+            match = re.search(r'"uniqueId"\s*:\s*"([^"]+)"', html)
+            if match:
+                page_name = match.group(1).strip()
 
-        # try to find followers in JSON data
+        # fallback: try title tag
+        if not page_name:
+            title = soup.find("title")
+            if title:
+                page_name = title.text
+                page_name = re.sub(r'\s*\|.*$', '', page_name)
+                page_name = re.sub(r'\s*-.*$', '', page_name)
+                page_name = page_name.strip()
+                if page_name.lower() == "tiktok":
+                    page_name = None
+
+        # get profile image from JSON data
+        match = re.search(r'"avatarLarger"\s*:\s*"([^"]+)"', html)
+        if match:
+            image = match.group(1).replace('\\u002F', '/').strip()
+
+        # fallback to avatarMedium
+        if not image:
+            match = re.search(r'"avatarMedium"\s*:\s*"([^"]+)"', html)
+            if match:
+                image = match.group(1).replace('\\u002F', '/').strip()
+
+        # fallback to og:image
+        if not image:
+            og_image = soup.find("meta", property="og:image")
+            if og_image:
+                image = og_image.get("content")
+
+        # get followers from JSON data
         match = re.search(r'"followerCount"\s*:\s*(\d+)', html)
         if match:
             count = int(match.group(1))
@@ -203,7 +257,7 @@ def get_tiktok_data(tt_url):
             else:
                 followers = str(count)
 
-        # try to find following in JSON data
+        # get following from JSON data
         match = re.search(r'"followingCount"\s*:\s*(\d+)', html)
         if match:
             count = int(match.group(1))
@@ -215,6 +269,7 @@ def get_tiktok_data(tt_url):
             "page_name": page_name,
             "followers": followers,
             "following": following,
+            "image": image
         }
 
     except Exception as e:
@@ -225,6 +280,7 @@ def get_tiktok_data(tt_url):
             "page_name": None,
             "followers": None,
             "following": None,
+            "image": None
         }
 
 def scrape(url):
