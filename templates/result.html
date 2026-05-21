@@ -24,6 +24,9 @@
                 {% endif %}
                 <div>
                     <div class="rname">{{ data.page_name or data.channel_name or data.url }}</div>
+                    {% if data.category %}
+                        <div class="rcategory">{{ data.category }}</div>
+                    {% endif %}
                     <div class="rurl">{{ data.url }}</div>
                 </div>
             </div>

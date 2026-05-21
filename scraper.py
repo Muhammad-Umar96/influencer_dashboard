@@ -1,8 +1,10 @@
 import requests
 import re
+import json
+import urllib.parse
 from bs4 import BeautifulSoup
 
-API_KEY = "f63b99413d994a9392bc28b8c95390c314d94587a71"
+API_KEY = "6e3b7237e30242a9936b2ef285174b07816fee17e0c"
 
 def get_facebook_data(fb_url):
     try:
@@ -15,7 +17,7 @@ def get_facebook_data(fb_url):
         followers = None
         following = None
         image = None
-
+        category = None
 
         # get page name from title
         title = soup.find("title")
@@ -39,13 +41,19 @@ def get_facebook_data(fb_url):
         if og_image:
             image = og_image.get("content")
 
+        # get category
+        match = re.search(r'"text"\s*:\s*"Page \\u00b7 ([^"]+)"', html)
+        if match:
+            category = match.group(1).strip()
+
         return {
             "platform": "Facebook",
             "url": fb_url,
             "page_name": page_name,
             "followers": followers,
             "following": following,
-            "image": image
+            "image": image,
+            "category": category
         }
 
     except Exception as e:
@@ -56,22 +64,16 @@ def get_facebook_data(fb_url):
             "page_name": None,
             "followers": None,
             "following": None,
-            "image": None
+            "image": None,
+            "category": None
         }
-
-    except Exception as e:
-        print(f"FACEBOOK SCRAPER ERROR: {str(e)}")
-        return {
-            "platform": "Facebook",
-            "url": fb_url,
-            "page_name": None,
-            "followers": None,
-            "following": None,
-        }
-
 
 def get_instagram_data(ig_url):
     try:
+        # extract username from URL
+        username_match = re.search(r'instagram\.com/([^/?]+)', ig_url)
+        username = username_match.group(1) if username_match else None
+
         api_url = f"https://api.scrape.do?token={API_KEY}&url={ig_url}&render=true"
         response = requests.get(api_url, timeout=100)
         html = response.text
@@ -81,6 +83,7 @@ def get_instagram_data(ig_url):
         followers = None
         following = None
         image = None
+        category = None
 
         # get page name from title
         title = soup.find("title")
@@ -95,18 +98,36 @@ def get_instagram_data(ig_url):
         description = soup.find("meta", {"name": "description"})
         if description:
             content = description.get("content", "")
-
             match = re.search(r'([\d,.]+[KMB]?)\s*Followers', content)
             if match:
                 followers = match.group(1).strip()
-
             match = re.search(r'([\d,.]+[KMB]?)\s*Following', content)
             if match:
                 following = match.group(1).strip()
-            
+
+        # get profile image
         og_image = soup.find("meta", property="og:image")
         if og_image:
             image = og_image.get("content")
+
+        # get category via Instagram GraphQL API
+        if username:
+            try:
+                graphql_url = f"https://www.instagram.com/api/v1/users/web_profile_info/?username={username}"
+                encoded = urllib.parse.quote_plus(graphql_url)
+                proxy_url = f"https://api.scrape.do?token={API_KEY}&url={encoded}"
+                headers = {
+                    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+                    "X-IG-App-ID": "936619743392459",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "Referer": "https://www.instagram.com/",
+                }
+                cat_response = requests.get(proxy_url, headers=headers, timeout=60)
+                user = cat_response.json().get("data", {}).get("user", {})
+                category = user.get("category_name")
+            except Exception as e:
+                print(f"CATEGORY ERROR: {str(e)}")
+                category = None
 
         return {
             "platform": "Instagram",
@@ -114,7 +135,8 @@ def get_instagram_data(ig_url):
             "page_name": page_name,
             "followers": followers,
             "following": following,
-            "image": image
+            "image": image,
+            "category": category or ""
         }
 
     except Exception as e:
@@ -125,7 +147,8 @@ def get_instagram_data(ig_url):
             "page_name": None,
             "followers": None,
             "following": None,
-            "image": None
+            "image": None,
+            "category": None
         }
 
 def get_youtube_data(yt_url):
