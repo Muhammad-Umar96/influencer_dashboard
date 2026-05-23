@@ -1,6 +1,7 @@
+import os
 from flask import Flask, request, jsonify, render_template
 from scraper import scrape
-import os
+from sqlalchemy import select
 from urllib.parse import quote_plus
 from models import db, InfluencerStat
 
@@ -23,7 +24,12 @@ with app.app_context():
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    recent = db.session.execute(
+        select(InfluencerStat)
+        .order_by(InfluencerStat.scraped_at.desc())
+        .limit(5)
+    ).scalars().all()
+    return render_template('index.html', recent=recent)
 
 @app.route('/followers', methods=['GET'])
 def followers():

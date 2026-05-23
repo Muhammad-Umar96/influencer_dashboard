@@ -12,7 +12,7 @@
 
         <form action="/followers" method="GET">
             <div class="row">
-                <input type="text" name="url" placeholder="https://www.instagram.com/natgeo" />
+                <input type="text" name="url" id="urlInput" placeholder="Paste URL here..." />
                 <button type="submit">Search</button>
             </div>
         </form>
@@ -20,6 +20,94 @@
         {% if error %}
         <div class="err">{{ error }}</div>
         {% endif %}
+
+        {% if recent %}
+        <div class="carousel-section">
+            <p class="carousel-label">Recently Searched</p>
+            <div class="carousel-wrapper">
+                <button class="carousel-btn" onclick="moveCarousel(-1)">&#8249;</button>
+                <div class="carousel-track-outer">
+                    <div class="carousel" id="carousel">
+                        {% for item in recent %}
+                        <div class="carousel-card" onclick="fillAndSearch('{{ item.url }}')">
+                            {% if item.image %}
+                                <img src="{{ item.image }}" alt="{{ item.page_name or item.channel_name }}" class="carousel-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                                <div class="carousel-avatar" style="display:none;">
+                                    {{ (item.page_name or item.channel_name or '?')[:2].upper() }}
+                                </div>
+                            {% else %}
+                                <div class="carousel-avatar">
+                                    {{ (item.page_name or item.channel_name or '?')[:2].upper() }}
+                                </div>
+                            {% endif %}
+                            <div class="carousel-info">
+                                <div class="carousel-name">{{ item.page_name or item.channel_name or item.url }}</div>
+                                <div class="carousel-count">
+                                    {{ item.subscribers or item.followers or '—' }}
+                                    <span>{{ 'subscribers' if item.platform == 'YouTube' else 'followers' }}</span>
+                                </div>
+                                <div class="carousel-platform {{ item.platform | lower }}">{{ item.platform }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <button class="carousel-btn" onclick="moveCarousel(1)">&#8250;</button>
+            </div>
+            <div class="carousel-dots" id="dots"></div>
+        </div>
+        {% endif %}
+
     </div>
+
+    <script>
+        const carousel = document.getElementById('carousel');
+        if (carousel) {
+            const cards = carousel.querySelectorAll('.carousel-card');
+            const dotsContainer = document.getElementById('dots');
+            let current = 0;
+            let autoTimer = null;
+
+            cards.forEach((_, i) => {
+                const dot = document.createElement('span');
+                dot.className = 'dot' + (i === 0 ? ' active' : '');
+                dot.onclick = () => { goTo(i); resetTimer(); };
+                dotsContainer.appendChild(dot);
+            });
+
+            function goTo(index) {
+                current = (index + cards.length) % cards.length;
+                const cardWidth = cards[0].offsetWidth + 16;
+                carousel.style.transform = `translateX(-${current * cardWidth}px)`;
+                document.querySelectorAll('.dot').forEach((d, i) => {
+                    d.classList.toggle('active', i === current);
+                });
+            }
+
+            function moveCarousel(dir) {
+                goTo(current + dir);
+                resetTimer();
+            }
+
+            function startTimer() {
+                autoTimer = setInterval(() => goTo(current + 1), 3000);
+            }
+
+            function resetTimer() {
+                clearInterval(autoTimer);
+                startTimer();
+            }
+
+            carousel.addEventListener('mouseenter', () => clearInterval(autoTimer));
+            carousel.addEventListener('mouseleave', startTimer);
+
+            startTimer();
+        }
+
+        function fillAndSearch(url) {
+            document.getElementById('urlInput').value = url;
+            document.querySelector('form').submit();
+        }
+    </script>
 </body>
 </html>
